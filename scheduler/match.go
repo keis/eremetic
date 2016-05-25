@@ -39,12 +39,40 @@ func (m *resourceMatcher) Description() string {
 	return fmt.Sprintf("%f of scalar resource %s", m.value, m.name)
 }
 
+type attributeMatcher struct {
+	name  string
+	value string
+}
+
+func (m *attributeMatcher) Matches(o interface{}) error {
+	offer := o.(*mesos.Offer)
+	err := errors.New("")
+
+	for _, attr := range offer.Attributes {
+		if attr.GetName() == m.name {
+			if attr.GetText().GetValue() == m.value {
+				return nil
+			}
+			return err
+		}
+	}
+	return err
+}
+
+func (m *attributeMatcher) Description() string {
+	return fmt.Sprintf("%s attribute is %s", m.name, m.value)
+}
+
 func CPUAvailable(v float64) ogle.Matcher {
 	return &resourceMatcher{"cpus", v}
 }
 
 func MemoryAvailable(v float64) ogle.Matcher {
 	return &resourceMatcher{"mem", v}
+}
+
+func HasAttribute(k string, v string) ogle.Matcher {
+	return &attributeMatcher{k, v}
 }
 
 func createMatcher(task types.EremeticTask) ogle.Matcher {

@@ -10,7 +10,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func offer(id string, cpu float64, mem float64) *mesos.Offer {
+func offer(id string, cpu float64, mem float64, rack string) *mesos.Offer {
 	return &mesos.Offer{
 		Id: &mesos.OfferID{
 			Value: proto.String(id),
@@ -22,6 +22,14 @@ func offer(id string, cpu float64, mem float64) *mesos.Offer {
 			Value: proto.String("slave-1234"),
 		},
 		Hostname: proto.String("localhost"),
+		Attributes: []*mesos.Attribute{
+			&mesos.Attribute{
+				Name: proto.String("rack"),
+				Text: &mesos.Value_Text{
+					Value: proto.String(rack),
+				},
+			},
+		},
 		Resources: []*mesos.Resource{
 			mesosutil.NewScalarResource("cpus", cpu),
 			mesosutil.NewScalarResource("mem", mem),
@@ -30,8 +38,8 @@ func offer(id string, cpu float64, mem float64) *mesos.Offer {
 }
 
 func TestMatch(t *testing.T) {
-	offerA := offer("offer-a", 0.6, 200.0)
-	offerB := offer("offer-b", 1.8, 512.0)
+	offerA := offer("offer-a", 0.6, 200.0, "rack-a")
+	offerB := offer("offer-b", 1.8, 512.0, "rack-b")
 
 	Convey("CPUAvailable", t, func() {
 		Convey("Above", func() {
@@ -56,6 +64,26 @@ func TestMatch(t *testing.T) {
 
 		Convey("Below", func() {
 			m := MemoryAvailable(256.0)
+			err := m.Matches(offerA)
+			So(err, ShouldNotBeNil)
+		})
+	})
+
+	Convey("HasAttribute", t, func() {
+		Convey("Matches", func() {
+			m := HasAttribute("rack", "rack-a")
+			err := m.Matches(offerA)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Doesn't match", func() {
+			m := HasAttribute("rack", "rack-c")
+			err := m.Matches(offerA)
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("Missing", func() {
+			m := HasAttribute("region", "stockholm")
 			err := m.Matches(offerA)
 			So(err, ShouldNotBeNil)
 		})

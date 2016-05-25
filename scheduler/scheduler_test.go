@@ -112,7 +112,7 @@ func TestScheduler(t *testing.T) {
 
 				Convey("No tasks", func() {
 					offers := []*mesos.Offer{
-						offer("1234", 1.0, 128),
+						offer("1234", 1.0, 128, "rack-a"),
 					}
 					driver.On("DeclineOffer").Return("declined").Once()
 					s.ResourceOffers(driver, offers)
@@ -122,7 +122,7 @@ func TestScheduler(t *testing.T) {
 
 				Convey("One task able to launch", func() {
 					offers := []*mesos.Offer{
-						offer("1234", 1.0, 128),
+						offer("1234", 1.0, 128, "rack-a"),
 					}
 					driver.On("LaunchTasks").Return("launched").Once()
 
@@ -142,7 +142,7 @@ func TestScheduler(t *testing.T) {
 
 				Convey("One task unable to launch", func() {
 					offers := []*mesos.Offer{
-						offer("1234", 1.0, 128),
+						offer("1234", 1.0, 128, "rack-a"),
 					}
 					driver.On("DeclineOffer").Return("declined").Once()
 
